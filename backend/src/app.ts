@@ -11,14 +11,30 @@ const app = express();
 // Middlewares
 // CORS: Use FRONTEND_URL if set; otherwise reflect request origin (required when credentials: true)
 const frontendUrl = process.env.FRONTEND_URL;
+const allowedOrigins = frontendUrl
+  ? frontendUrl.split(',').map((u) => u.trim())
+  : ['http://localhost:5173', 'http://127.0.0.1:5173'];
+
 app.use(cors({
-  origin: frontendUrl
-    ? frontendUrl.split(',').map((u) => u.trim()) // support comma-separated list of allowed origins
-    : (origin, callback) => callback(null, origin || '*'), // reflect origin dynamically for dev/self-hosted
+  origin: (origin, callback) => {
+    // Allow requests with no origin (e.g., mobile apps, curl, Postman)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    // Fallback: reflect origin (dev mode safety net)
+    return callback(null, origin);
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept', 'X-Requested-With'],
-  credentials: true
+  credentials: true,
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
 }));
+
+// Respond to OPTIONS preflight for all routes explicitly
+app.options('*', cors());
+
 app.disable('x-powered-by');
 app.use(express.json());
 

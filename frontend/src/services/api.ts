@@ -1,23 +1,25 @@
 import axios from 'axios';
 
-// Configure standard API base URL
-let rawApiUrl = import.meta.env.VITE_API_URL;
-
-if (rawApiUrl) {
-  rawApiUrl = rawApiUrl.trim().replace(/\/+$/, ''); // remove trailing slashes
-  if (!rawApiUrl.endsWith('/api')) {
-    rawApiUrl = `${rawApiUrl}/api`;
-  }
-}
-
-const API_URL = rawApiUrl || `http://${window.location.hostname}:5000/api`;
+// API base URL resolution — works in ALL environments:
+//   - Dev:        Vite proxy forwards /api/* → localhost:5000/api/* (see vite.config.ts)
+//   - Production (same domain): /api/* resolves to the same origin (no CORS needed)
+//   - Production (separate domains): Set VITE_API_URL to your backend root URL
+//
+// IMPORTANT: baseURL MUST end with a trailing slash so that relative paths
+// like 'auth/register' resolve to /api/auth/register, not /auth/register.
+// A leading slash in axios URL would bypass the /api base path entirely!
+const rawApiUrl = import.meta.env.VITE_API_URL;
+const API_BASE = rawApiUrl
+  ? rawApiUrl.trim().replace(/\/+$/, '').replace(/\/api\/?$/, '') + '/api/'
+  : '/api/';
 
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: API_BASE,
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
 
 // Automatically inject JWT token into all request headers
 api.interceptors.request.use(

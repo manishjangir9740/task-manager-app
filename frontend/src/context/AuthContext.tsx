@@ -27,7 +27,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (storedToken) {
         try {
           setToken(storedToken);
-          const response = await api.get('/auth/profile');
+          const response = await api.get('auth/profile');
           setUser(response.data.user);
           setIsAuthenticated(true);
         } catch (error) {
@@ -47,7 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Login handler
   const login = async (email: string, password: string, rememberMe: boolean) => {
     try {
-      const response = await api.post('/auth/login', { email, password });
+      const response = await api.post('auth/login', { email, password });
       const { token: receivedToken, user: receivedUser } = response.data;
       
       if (rememberMe) {
@@ -69,7 +69,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Register handler
   const register = async (name: string, email: string, password: string) => {
     try {
-      const response = await api.post('/auth/register', { name, email, password });
+      const response = await api.post('auth/register', { name, email, password });
       const { token: receivedToken, user: receivedUser } = response.data;
 
       // Auto-login: store token and set auth state after successful registration

@@ -45,7 +45,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
         params.priority = priorityFilter;
       }
 
-      const response = await api.get('/tasks', { params });
+      const response = await api.get('tasks', { params });
       setTasks(response.data);
     } catch (error) {
       console.error('Failed to fetch tasks:', error);
@@ -68,7 +68,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     due_date?: string;
   }) => {
     try {
-      const response = await api.post('/tasks', taskData);
+      const response = await api.post('tasks', taskData);
       const newTask = response.data;
       setTasks((prev) => [newTask, ...prev]);
       return newTask;
@@ -81,7 +81,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Update task action
   const updateTask = async (id: number, taskData: Partial<Task>) => {
     try {
-      const response = await api.put(`/tasks/${id}`, taskData);
+      const response = await api.put(`tasks/${id}`, taskData);
       const updatedTask = response.data;
       setTasks((prev) => prev.map((t) => (t.id === id ? updatedTask : t)));
       return updatedTask;
@@ -94,7 +94,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Delete task action
   const deleteTask = async (id: number) => {
     try {
-      await api.delete(`/tasks/${id}`);
+      await api.delete(`tasks/${id}`);
       setTasks((prev) => prev.filter((t) => t.id !== id));
     } catch (error: any) {
       const message = error.response?.data?.message || 'Failed to delete task';
@@ -112,7 +112,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 
     try {
-      await api.put(`/tasks/${id}`, { stage: newStage });
+      await api.put(`tasks/${id}`, { stage: newStage });
     } catch (error) {
       console.error('Failed to move task. Reverting state...', error);
       // Revert if API request fails

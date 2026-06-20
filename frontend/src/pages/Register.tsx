@@ -27,8 +27,9 @@ export const Register: React.FC = () => {
       return;
     }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+    if (!passwordRegex.test(password)) {
+      setError('Password must be at least 8 characters and include an uppercase letter, lowercase letter, and a number.');
       return;
     }
 
@@ -131,7 +132,7 @@ export const Register: React.FC = () => {
               Password
             </label>
             <span className="text-[9px] font-medium text-slate-400">
-              Minimum 6 characters.
+              Min. 8 chars, uppercase, lowercase & number.
             </span>
           </div>
           <div className="relative">
