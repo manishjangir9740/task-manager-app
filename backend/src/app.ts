@@ -9,9 +9,12 @@ dotenv.config();
 const app = express();
 
 // Middlewares
-const allowedOrigin = process.env.FRONTEND_URL || true;
+// CORS: Use FRONTEND_URL if set; otherwise reflect request origin (required when credentials: true)
+const frontendUrl = process.env.FRONTEND_URL;
 app.use(cors({
-  origin: allowedOrigin,
+  origin: frontendUrl
+    ? frontendUrl.split(',').map((u) => u.trim()) // support comma-separated list of allowed origins
+    : (origin, callback) => callback(null, origin || '*'), // reflect origin dynamically for dev/self-hosted
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept', 'X-Requested-With'],
   credentials: true

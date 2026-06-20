@@ -1,7 +1,16 @@
 import axios from 'axios';
 
 // Configure standard API base URL
-const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
+let rawApiUrl = import.meta.env.VITE_API_URL;
+
+if (rawApiUrl) {
+  rawApiUrl = rawApiUrl.trim().replace(/\/+$/, ''); // remove trailing slashes
+  if (!rawApiUrl.endsWith('/api')) {
+    rawApiUrl = `${rawApiUrl}/api`;
+  }
+}
+
+const API_URL = rawApiUrl || `http://${window.location.hostname}:5000/api`;
 
 const api = axios.create({
   baseURL: API_URL,
