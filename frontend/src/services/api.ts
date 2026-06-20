@@ -1,10 +1,15 @@
 import axios from 'axios';
 
-// In production, VITE_API_URL must be set to the deployed backend URL (e.g. https://your-backend.vercel.app/api).
-// In local development it falls back to localhost:5000.
-const API_URL = import.meta.env.VITE_API_URL
-  ? import.meta.env.VITE_API_URL.replace(/\/$/, '') // strip trailing slash
-  : 'http://localhost:5000/api';
+// Automatically ensure VITE_API_URL ends with /api even if it's configured without it on Vercel
+let rawApiUrl = import.meta.env.VITE_API_URL || '';
+if (rawApiUrl) {
+  const cleanUrl = rawApiUrl.replace(/\/$/, ''); // Remove trailing slash if any
+  rawApiUrl = cleanUrl.endsWith('/api') ? cleanUrl : `${cleanUrl}/api`;
+} else {
+  rawApiUrl = 'http://localhost:5000/api';
+}
+
+const API_URL = rawApiUrl;
 
 const api = axios.create({
   baseURL: API_URL,
