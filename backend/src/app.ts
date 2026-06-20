@@ -3,38 +3,45 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth.routes';
 import taskRoutes from './routes/task.routes';
+import { testConnection } from './config/db';
 
 dotenv.config();
 
 const app = express();
 
-// Middlewares
-// CORS: Use FRONTEND_URL if set; otherwise reflect request origin (required when credentials: true)
-const frontendUrl = process.env.FRONTEND_URL;
-const allowedOrigins = frontendUrl
-  ? frontendUrl.split(',').map((u) => u.trim())
-  : ['http://localhost:5173', 'http://127.0.0.1:5173'];
-
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (e.g., mobile apps, curl, Postman)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
+// Serverless DB Init Middleware (runs once on cold start to verify/create DB and tables)
+let isDbInitialized = false;
+app.use(async (req: Request, res: Response, next: NextFunction) => {
+  if (!isDbInitialized) {
+    try {
+      await testConnection();
+      isDbInitialized = true;
+    } catch (err) {
+      console.error('Failed to initialize database on request:', err);
     }
-    // Fallback: reflect origin (dev mode safety net)
-    return callback(null, origin);
-  },
+  }
+  next();
+});
+
+// Middlewares
+// In production set FRONTEND_URL to the deployed frontend origin to restrict CORS.
+// When FRONTEND_URL is not set (local dev) all origins are allowed.
+const frontendUrl = process.env.FRONTEND_URL;
+app.use(cors({
+  origin: frontendUrl
+    ? (origin, callback) => {
+        // Allow requests with no origin (e.g. mobile apps, Postman) and the configured frontend
+        if (!origin || origin === frontendUrl) {
+          callback(null, true);
+        } else {
+          callback(new Error(`CORS: origin '${origin}' is not allowed`));
+        }
+      }
+    : true, // dev: allow all origins
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept', 'X-Requested-With'],
-  credentials: true,
-  preflightContinue: false,
-  optionsSuccessStatus: 204,
+  credentials: true
 }));
-
-// Respond to OPTIONS preflight for all routes explicitly
-app.options('*', cors());
-
 app.disable('x-powered-by');
 app.use(express.json());
 
