@@ -10,7 +10,44 @@ const dbName = process.env.DB_NAME || 'task_manager_db';
 // Ensure the database and tables exist (auto-migration on startup)
 async function ensureDatabaseExists() {
   if (databaseUrl) {
-    // If using a cloud database URL, we assume the DB is already created
+    // If using a cloud database URL, we get a connection from the pool to verify/create the tables
+    let connection;
+    try {
+      connection = await pool.getConnection();
+      
+      // Create users table
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS users (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          name VARCHAR(255) NOT NULL,
+          email VARCHAR(255) NOT NULL UNIQUE,
+          password VARCHAR(255) NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+      `);
+
+      // Create tasks table
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS tasks (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          user_id INT NOT NULL,
+          title VARCHAR(255) NOT NULL,
+          description TEXT,
+          priority ENUM('Low', 'Medium', 'High') DEFAULT 'Medium',
+          stage ENUM('To Do', 'In Progress', 'Under Review', 'Completed') DEFAULT 'To Do',
+          due_date DATE DEFAULT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+      `);
+      console.log("[Database Setup] Cloud database tables verified/created successfully.");
+    } catch (err: any) {
+      console.error("[Database Setup] Failed to verify cloud database tables:", err.message);
+      throw err;
+    } finally {
+      if (connection) connection.release();
+    }
     return;
   }
 
