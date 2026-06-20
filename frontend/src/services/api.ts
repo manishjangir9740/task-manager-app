@@ -1,25 +1,17 @@
 import axios from 'axios';
 
-// API base URL resolution — works in ALL environments:
-//   - Dev:        Vite proxy forwards /api/* → localhost:5000/api/* (see vite.config.ts)
-//   - Production (same domain): /api/* resolves to the same origin (no CORS needed)
-//   - Production (separate domains): Set VITE_API_URL to your backend root URL
-//
-// IMPORTANT: baseURL MUST end with a trailing slash so that relative paths
-// like 'auth/register' resolve to /api/auth/register, not /auth/register.
-// A leading slash in axios URL would bypass the /api base path entirely!
-const rawApiUrl = import.meta.env.VITE_API_URL;
-const API_BASE = rawApiUrl
-  ? rawApiUrl.trim().replace(/\/+$/, '').replace(/\/api\/?$/, '') + '/api/'
-  : '/api/';
+// In production, VITE_API_URL must be set to the deployed backend URL (e.g. https://your-backend.vercel.app/api).
+// In local development it falls back to localhost:5000.
+const API_URL = import.meta.env.VITE_API_URL
+  ? import.meta.env.VITE_API_URL.replace(/\/$/, '') // strip trailing slash
+  : 'http://localhost:5000/api';
 
 const api = axios.create({
-  baseURL: API_BASE,
+  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
 });
-
 
 // Automatically inject JWT token into all request headers
 api.interceptors.request.use(
